@@ -31,10 +31,11 @@ public:
 	pstatus status;
 	int runtime;
 	string path;
+
 	Process(string path, int time){
 		this->status = SCHEDULED;
 		this->path = path;
-		this->runtime = runtime;
+		this->runtime = time;
 	}
 
 	void run(){
@@ -52,6 +53,7 @@ public:
 			this->status = DEAD;
 		}
 	}
+
 };
 
 key_t	msgkey;
@@ -98,12 +100,18 @@ void addToSchedule (char* path, int offset, int times){
 	}
 }
 
+// Verifica a lista de postergados
+// e adiciona a lista de em execucao caso seja hora
 void checkSchedule(){
 	int current_time = getCurrentTime();
-	for(vector<Process>::iterator it = proc_scheduled.begin(); it != proc_scheduled.end(); ++it){
+	vector<Process>::iterator it = proc_scheduled.begin();
+	while(it != proc_scheduled.end()){
 		if(it->runtime <= current_time){
+			it->status = SLEEPING;
 			proc_running.push(*it);
 			it = proc_scheduled.erase(it);
+		}else{
+			++it;
 		}
 	}
 }
@@ -132,27 +140,22 @@ int main(){
         exit(1);
     }
 
-    addToSchedule("/root/trabso/hello", 1, 2);
-
-
 	while(true){
 
-		//msgrcv(msgqid, &msg, msgsize, -2, 0);
+		if(-1 != msgrcv(msgqid, &msg, msgsize, -2, IPC_NOWAIT)){
 
-		//if(msg.mtype == 1)
-			//raise(SIGTERM);
+			if(msg.mtype == 1)
+				raise(SIGTERM);
 
-		//addToSchedule(msg.proc.path, msg.proc.offset, msg.proc.times);
+			addToSchedule(msg.proc.path, msg.proc.offset, msg.proc.times);
+			
+		}
 
 		checkSchedule();
 
 		runProcesses();
 
 		sleep(1);
-
-		//executa(msg.proc.path);
-
-		//cout << msg.pname << endl;
 
 	}
 
