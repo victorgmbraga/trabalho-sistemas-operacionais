@@ -20,22 +20,13 @@ struct msgtype{
 
 int main(int argc, char *argv[]){
 
-	// Vezes que o programa ira executar
-	int times = atoi(argv[2]);
-
-	// Calcula o offset em minutos
-	int hours 			= atoi(strtok(argv[1], ":"));
-	int minutes 		= atoi(strtok(NULL, ":"));
-	int total_minutes	= (hours*60 + minutes) % 1440;
-
 	// Definições da mensagem a ser enviada
 	key_t msgkey 	= 0x10012648;
 	int msgflag 	= 0666;
 	int msgsize 	= sizeof(struct msgtype) - sizeof(long);
 
 	// Monta a mensagem
-	struct msgtype msg = { 4, { " ", total_minutes, times } };
-	strcpy(msg.proc.path, argv[3]);
+	struct msgtype msg = { 3, { " ", atoi(argv[1]), 0 } };
 
 	// Se conecta a fila de mensagens
 	int msgqid;
@@ -45,7 +36,7 @@ int main(int argc, char *argv[]){
     }
 
     // Envia a mensagem
-    if(msgsnd(msgqid, &msg, msgsize, 0) < 0){
+    if(msgsnd(msgqid, &msg, msgsize, 2) < 0){
     	perror("msgsnd");
     }
 
